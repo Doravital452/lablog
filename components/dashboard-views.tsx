@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Edit, Trash2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import type { Experiment } from "@/lib/types";
 import { formatConcentration } from "@/lib/concentration";
 import { formatExperimentDateTime } from "@/lib/format-experiment-date";
 import { outcomeBadgeClass, outcomeLabel } from "@/lib/outcome-styles";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -29,6 +32,49 @@ type SortKey =
   | "result";
 
 type SortDir = "asc" | "desc";
+
+function DeleteConfirmationDialog({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  experimentName 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  experimentName: string;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="mx-4 max-w-sm rounded-lg bg-white p-6 shadow-lg">
+        <h3 className="mb-2 text-lg font-semibold text-neutral-900">
+          Delete experiment?
+        </h3>
+        <p className="mb-6 text-sm text-neutral-600">
+          Are you sure you want to delete "{experimentName}"? This action cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={onConfirm}
+            className="flex-1"
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DashboardEmptyState() {
   return (
@@ -79,7 +125,10 @@ function sortValue(
   }
 }
 
-function CompareTable({ experiments }: { experiments: Experiment[] }) {
+function CompareTable({ experiments, onDeleteExperiment }: { 
+  experiments: Experiment[]; 
+  onDeleteExperiment: (id: string) => void;
+}) {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -143,6 +192,7 @@ function CompareTable({ experiments }: { experiments: Experiment[] }) {
                 </button>
               </TableHead>
             ))}
+            <TableHead className="whitespace-nowrap">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -182,6 +232,24 @@ function CompareTable({ experiments }: { experiments: Experiment[] }) {
               <TableCell className="max-w-[min(40vw,280px)] text-neutral-700">
                 <span className="line-clamp-3">{exp.result?.trim() || "—"}</span>
               </TableCell>
+              <TableCell className="whitespace-nowrap">
+                <div className="flex items-center gap-1">
+                  <Link
+                    href={`/experiments/${exp.id}/edit`}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#6366f1] transition-colors hover:bg-[#6366f1]/10"
+                    aria-label="Edit experiment"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Link>
+                  <button
+                    onClick={() => onDeleteExperiment(exp.id)}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#ef4444] transition-colors hover:bg-[#ef4444]/10"
+                    aria-label="Delete experiment"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -190,25 +258,69 @@ function CompareTable({ experiments }: { experiments: Experiment[] }) {
   );
 }
 
-function TimelineView({ experiments }: { experiments: Experiment[] }) {
+function TimelineView({ experiments, onDeleteExperiment }: { 
+  experiments: Experiment[]; 
+  onDeleteExperiment: (id: string) => void;
+}) {
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    experimentId: string;
+    experimentName: string;
+  }>({ isOpen: false, experimentId: "", experimentName: "" });
+
   if (experiments.length === 0) {
     return <DashboardEmptyState />;
   }
 
+  const handleDeleteClick = (exp: Experiment) => {
+    setDeleteDialog({
+      isOpen: true,
+      experimentId: exp.id,
+      experimentName: exp.name,
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    onDeleteExperiment(deleteDialog.experimentId);
+    setDeleteDialog({ isOpen: false, experimentId: "", experimentName: "" });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialog({ isOpen: false, experimentId: "", experimentName: "" });
+  };
+
   return (
-    <ul
-      className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3"
-      role="list"
-    >
-      {experiments.map((exp) => (
-        <li key={exp.id} className="min-w-0">
-          <Link href={`/experiments/${exp.id}`} className="block h-full">
+    <>
+      <ul
+        className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3"
+        role="list"
+      >
+        {experiments.map((exp) => (
+          <li key={exp.id} className="min-w-0">
             <Card className="h-full transition-shadow hover:shadow-md">
               <CardHeader className="gap-2 pb-2">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <CardTitle className="text-base font-semibold leading-snug">
                     {exp.name}
                   </CardTitle>
+                  <div className="flex items-center gap-1">
+                    <Link
+                      href={`/experiments/${exp.id}/edit`}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#6366f1] transition-colors hover:bg-[#6366f1]/10"
+                      aria-label="Edit experiment"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Link>
+                    <button
+                      onClick={() => handleDeleteClick(exp)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#ef4444] transition-colors hover:bg-[#ef4444]/10"
+                      aria-label="Delete experiment"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-start justify-between gap-2">
                   <Badge
                     variant="outline"
                     className={`shrink-0 border ${outcomeBadgeClass(exp.outcome)}`}
@@ -236,14 +348,40 @@ function TimelineView({ experiments }: { experiments: Experiment[] }) {
                 </div>
               </CardContent>
             </Card>
-          </Link>
-        </li>
-      ))}
-    </ul>
+          </li>
+        ))}
+      </ul>
+      <DeleteConfirmationDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        experimentName={deleteDialog.experimentName}
+      />
+    </>
   );
 }
 
-export function DashboardViews({ experiments }: { experiments: Experiment[] }) {
+export function DashboardViews({ experiments, onExperimentsChange }: { 
+  experiments: Experiment[]; 
+  onExperimentsChange: (experiments: Experiment[]) => void;
+}) {
+  const handleDeleteExperiment = async (experimentId: string) => {
+    const supabase = createClient();
+    
+    const { error } = await supabase
+      .from("experiments")
+      .delete()
+      .eq("id", experimentId);
+
+    if (error) {
+      console.error("Error deleting experiment:", error);
+      return;
+    }
+
+    // Update the local state to remove the deleted experiment
+    onExperimentsChange(experiments.filter(exp => exp.id !== experimentId));
+  };
+
   return (
     <Tabs
       defaultValue="compare"
@@ -267,13 +405,13 @@ export function DashboardViews({ experiments }: { experiments: Experiment[] }) {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="timeline" className="mt-0 w-full min-w-0 flex-1">
-        <TimelineView experiments={experiments} />
+        <TimelineView experiments={experiments} onDeleteExperiment={handleDeleteExperiment} />
       </TabsContent>
       <TabsContent value="compare" className="mt-0 w-full min-w-0 flex-1">
         {experiments.length === 0 ? (
           <DashboardEmptyState />
         ) : (
-          <CompareTable experiments={experiments} />
+          <CompareTable experiments={experiments} onDeleteExperiment={handleDeleteExperiment} />
         )}
       </TabsContent>
     </Tabs>
