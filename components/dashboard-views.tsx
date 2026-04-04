@@ -30,6 +30,29 @@ type SortKey =
 
 type SortDir = "asc" | "desc";
 
+function DashboardEmptyState() {
+  return (
+    <div className="flex min-h-[min(50vh,420px)] w-full flex-col items-center justify-center px-4 py-12 text-center">
+      <span className="mb-4 text-5xl leading-none" aria-hidden>
+        🧪
+      </span>
+      <h2 className="mb-2 text-lg font-semibold text-neutral-900">
+        No experiments yet
+      </h2>
+      <p className="mb-6 max-w-md text-sm leading-relaxed text-neutral-600">
+        Start logging your experiments to track parameters and spot patterns
+        across runs
+      </p>
+      <Link
+        href="/experiments/new"
+        className="inline-flex h-9 items-center justify-center rounded-lg bg-[#6366f1] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#4f46e5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#6366f1]"
+      >
+        Log your first experiment
+      </Link>
+    </div>
+  );
+}
+
 function sortValue(
   exp: Experiment,
   key: SortKey
@@ -169,11 +192,7 @@ function CompareTable({ experiments }: { experiments: Experiment[] }) {
 
 function TimelineView({ experiments }: { experiments: Experiment[] }) {
   if (experiments.length === 0) {
-    return (
-      <p className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-4 py-10 text-center text-neutral-600">
-        No experiments yet. Tap + to log your first run.
-      </p>
-    );
+    return <DashboardEmptyState />;
   }
 
   return (
@@ -252,9 +271,7 @@ export function DashboardViews({ experiments }: { experiments: Experiment[] }) {
       </TabsContent>
       <TabsContent value="compare" className="mt-0 w-full min-w-0 flex-1">
         {experiments.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-neutral-300 bg-neutral-50 px-4 py-10 text-center text-neutral-600">
-            No experiments yet. Tap + to log your first run.
-          </p>
+          <DashboardEmptyState />
         ) : (
           <CompareTable experiments={experiments} />
         )}
