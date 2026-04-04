@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { ExperimentFormInitial } from "@/lib/form-initial";
 import type { ExperimentOutcome } from "@/lib/types";
 import { concentrationFromRecord } from "@/lib/concentration";
+import { formatExperimentShortDateTime } from "@/lib/format-experiment-date";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +49,7 @@ type ExperimentFormProps = {
   mode: "create" | "edit";
   experimentId?: string;
   initial: ExperimentFormInitial;
-  pastExperiments: { id: string; name: string }[];
+  pastExperiments: { id: string; name: string; created_at: string }[];
 };
 
 export function ExperimentForm({
@@ -304,7 +305,7 @@ export function ExperimentForm({
           <option value="">None</option>
           {basedOnOptions.map((p) => (
             <option key={p.id} value={p.id}>
-              {p.name}
+              {p.name} — {formatExperimentShortDateTime(p.created_at)}
             </option>
           ))}
         </select>

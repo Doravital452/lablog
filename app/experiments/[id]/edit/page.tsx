@@ -24,12 +24,15 @@ export default async function EditExperimentPage({
 
   const { data: pastRows } = await supabase
     .from("experiments")
-    .select("id, name")
+    .select("id, name, created_at")
     .order("date", { ascending: false });
 
   const pastExperiments =
-    pastRows?.map((r) => ({ id: r.id as string, name: r.name as string })) ??
-    [];
+    pastRows?.map((r) => ({
+      id: r.id as string,
+      name: r.name as string,
+      created_at: r.created_at as string,
+    })) ?? [];
 
   return (
     <div className="min-h-dvh bg-white pb-12">
