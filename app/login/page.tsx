@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { GoogleOAuthSection } from "@/components/google-oauth-section";
 import { LoginForm } from "./login-form";
 
 export default function LoginPage() {
@@ -11,7 +12,16 @@ export default function LoginPage() {
           </div>
         }
       >
-        <LoginForm />
+        <div className="mx-auto w-full max-w-sm space-y-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-neutral-900">LabLog</h1>
+            <p className="mt-1 text-sm text-neutral-600">
+              Sign in to your account
+            </p>
+          </div>
+          <GoogleOAuthSection />
+          <LoginForm />
+        </div>
       </Suspense>
     </div>
   );

@@ -5,8 +5,9 @@ import {
   experimentToFormInitial,
 } from "@/lib/form-initial";
 import { mapExperimentRow } from "@/lib/map-experiment";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 type SearchParams = { from?: string | string[] };
 
@@ -15,6 +16,10 @@ export default async function NewExperimentPage({
 }: {
   searchParams: SearchParams;
 }) {
+  if (!isSupabaseConfigured()) {
+    redirect("/login");
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

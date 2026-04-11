@@ -2,16 +2,19 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Clock, GitBranch, MessageSquare, Table2, Zap } from "lucide-react";
 
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (isSupabaseConfigured()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (user) {
-    redirect("/dashboard");
+    if (user) {
+      redirect("/dashboard");
+    }
   }
 
   return (

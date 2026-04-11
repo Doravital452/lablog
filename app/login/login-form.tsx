@@ -36,11 +36,7 @@ export function LoginForm() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-sm space-y-8">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-neutral-900">LabLog</h1>
-        <p className="mt-1 text-sm text-neutral-600">Sign in to your account</p>
-      </div>
+    <>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -90,6 +86,6 @@ export function LoginForm() {
           Sign up
         </Link>
       </p>
-    </div>
+    </>
   );
 }
