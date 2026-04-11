@@ -7,7 +7,7 @@ import { signOut } from "@/lib/actions/auth";
 import { useEffect, useState } from "react";
 
 export function AppHeader() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
